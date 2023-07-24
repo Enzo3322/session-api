@@ -4,10 +4,22 @@ import * as controllers from "../controllers";
 async function userRouter(fastify: FastifyInstance) {
   fastify.post("/signin", {
     handler: controllers.signIn,
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: 1,
+      },
+    },
   });
 
   fastify.post("/signup", {
     handler: controllers.signUp,
+    config: {
+      rateLimit: {
+        max: 5,
+        timeWindow: 1,
+      },
+    },
   });
 
   fastify.post("/logout", {

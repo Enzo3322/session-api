@@ -3,25 +3,30 @@ import AutoLoad, { AutoloadPluginOptions } from "@fastify/autoload";
 import { FastifyPluginAsync } from "fastify";
 import cookie, { FastifyCookieOptions } from "@fastify/cookie";
 import userRouter from "./routes/user.route";
+import { checkValidUser } from "./middlewares/auth";
 
-export type AppOptions = {
-  // Place your custom options for app below here.
-} & Partial<AutoloadPluginOptions>;
+export type AppOptions = {} & Partial<AutoloadPluginOptions>;
 
-// Pass --options via CLI arguments in command to enable these options.
 const options: AppOptions = {};
 
 const app: FastifyPluginAsync<AppOptions> = async (
   fastify,
   opts
 ): Promise<void> => {
-  // Place here your custom code!
+  void fastify.addHook("preValidation", checkValidUser);
 
-  // Do not touch the following lines
+  await fastify.register(import("@fastify/rate-limit"), {
+    global: false,
+  });
 
-  // This loads all plugins defined in plugins
-  // those should be support plugins that are reused
-  // through your application
+  void fastify.setErrorHandler(function (error, request, reply) {
+    if (error.statusCode === 429) {
+      reply.code(429);
+      error.message = "You hit the rate limit! Slow down please!";
+    }
+    reply.send(error);
+  });
+
   void fastify.register(AutoLoad, {
     dir: join(__dirname, "plugins"),
     options: opts,
@@ -31,8 +36,6 @@ const app: FastifyPluginAsync<AppOptions> = async (
     parseOptions: {},
   } as FastifyCookieOptions);
 
-  // This loads all plugins defined in routes
-  // define your routes in one of these
   void fastify.register(AutoLoad, {
     dir: join(__dirname, "routes"),
     options: opts,

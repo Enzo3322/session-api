@@ -23,3 +23,8 @@ model Session {
   userId    String   @db.Uuid
   createdAt DateTime @default(now()) @db.Timestamp(3)
 }
+
+model Devices {
+  id        String @id @unique @default(uuid()) @db.Uuid
+  userAgent String
+}
